@@ -2,19 +2,17 @@ let fs = require('fs');
 
 function main(){
 
-    let count = 0;
+    let count = 1;
     let data = fs.readFileSync('demo.txt', 'utf8');
     data = data.toString();
     let rowList = data.split('\n');
     let originalRowList = JSON.parse(JSON.stringify(rowList));
-    
-    let cardIndex = createIndex(originalRowList);
     let totalList = [];
     while(true){
         let row = rowList.splice(0, 1)[0];
         let results = processData(row);
         totalList.push(results);
-        // console.log(results)
+        //console.log(results)
         if(rowList.length == 0){
             break;
         }
@@ -29,14 +27,16 @@ function main(){
         ///for each match found, add a copy for each subsequent card
         let tempArray = [];
         let tempCardName = tempCard.split(':')[0];
-        //console.log('\n\n')
-        //console.log(tempCardName, 'Resulted in:');
-        let offsetIndex = cardIndex.find(obj => obj.cardName === tempCardName).index;
+        let offsetIndex = parseInt(tempCardName.match(/\d+/));
+        console.log('\n\n')
+        console.log(tempCardName, 'Resulted in:');
         //console.log(offsetIndex)
-        for(let i = 1 + offsetIndex; i <= matchCount + offsetIndex; i++){
+        for(let i = offsetIndex; i < matchCount + offsetIndex; i++){
             
-            //console.log(originalRowList[i]);
-            tempArray.push(originalRowList[i])
+            console.log(originalRowList[i]);
+            if(originalRowList[i] != undefined){
+                tempArray.push(originalRowList[i])
+            }
         }
         ///merge two arrays
         Array.prototype.push.apply(rowList, tempArray);
@@ -52,8 +52,8 @@ function main(){
     }
     
     console.log('Card count:', count)
-    //console.log(totalList)
-    finalList(totalList);
+    console.log(totalList.length)
+    //finalList(totalList);
 }
 
 ///process row
@@ -65,33 +65,18 @@ function processData(row){
     let card = row.split(':')[0];
     ///grab winning numbers and store them in a list
     let winningNumbers = row.split(':')[1].split('|')[0].trim(' ').split(' ');
-    ///grab my numbers and store them in a list
-    let myNumbers = row.split(':')[1].split('|')[1].trim(' ').split(' ');
+    ///grab my numbers and store them as string
+    let myNumbers = row.split(':')[1].split('|')[1].trim(' ');
 
-    ///iterate over list of my numbers
-    for (let number of myNumbers) {
-
-        ///convert string to number
-        number = parseInt(number);
-
-        ///filter winning numbers to see if it matches my number
-        let checkNumber = winningNumbers.filter(num => {
-
-            ///convert string to number
-            num = parseInt(num);
-
-            ///only compare if both values are actually numbers
-            if (!isNaN(num) && !isNaN(number)) {
-                ///return match
-                return num == number;
-            }
-        })
-
-        ///if match, increment matchCount for current card
-        if (checkNumber.length > 0) {
-            matchCount += 1;
+    ///iterate over winning numbers
+    for(let num of winningNumbers){
+        ///check index of current winning number
+        let index = myNumbers.indexOf(num);
+        ///if not -1, increment match
+        if(index != -1){
+            matchCount +=1;
         }
-        }
+    }
     return {num: card, row, matchCount};
 }
 
@@ -110,17 +95,6 @@ function finalList(totalList){
     });
     console.log(totalList)
     console.log(totalList.length)
-}
-
-function createIndex(originalRowList){
-    let indexArray = [];
-    let index = 0;
-    for(let row of originalRowList){
-        let cardName = row.split(':')[0];
-        indexArray.push({cardName, index, card: row});
-        index += 1;
-    }
-    return indexArray;
 }
 
 main();
